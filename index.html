@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MV Mayukh | ECR Dashboard</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <style>
+        :root { --green: #00ff41; --amber: #ffb000; --red: #ff3e3e; --panel: #1a252c; }
+        body { background: #05080a; color: var(--green); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; }
+        .screen { position: fixed; inset: 0; background: black; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; padding: 20px; }
+        .btn { border: 2px solid var(--green); background: transparent; color: var(--green); padding: 12px 24px; cursor: pointer; font-size: 1.1rem; margin-top: 15px; min-width: 200px; }
+        .btn:hover { background: var(--green); color: black; }
+        #dashboard { display: none; padding: 10px; height: 100vh; grid-template-columns: 1fr 1.2fr 1fr; grid-template-rows: auto 1fr auto; gap: 10px; box-sizing: border-box; }
+        .panel { background: rgba(26, 37, 44, 0.9); border: 1px solid #34495e; padding: 10px; border-radius: 5px; display: flex; flex-direction: column; }
+        .label { font-size: 0.75rem; color: var(--amber); margin-top: 5px; }
+        .val { font-size: 1.3rem; margin-bottom: 5px; color: white; }
+        input[type=range] { width: 100%; accent-color: var(--green); margin: 8px 0; cursor: pointer; }
+        #engine-status-tag { font-weight: bold; padding: 8px; border: 1px solid var(--green); text-align: center; color: var(--green); margin-bottom: 10px; }
+        #arrival-popup { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; flex-direction: column; justify-content: center; align-items: center; text-align: center; border: 5px solid var(--red); }
+        @media (max-width: 900px) { #dashboard { grid-template-columns: 1fr; overflow-y: auto; } }
+    </style>
+</head>
+<body>
+
+    <div id="scr-1" class="screen">
+        <h1 style="font-size: 2.5rem;">WELCOME TO MV MAYUKH</h1>
+        <button class="btn" onclick="forceAudioUnlock(); nextScreen(1)">BOARD VESSEL</button>
+    </div>
+
+    <div id="scr-2" class="screen" style="display:none">
+        <h2 style="color:var(--amber); line-height: 1.5;">DEAR CHIEF DIPANWITA,<br>MV MAYUKH WELCOMES YOU ONBOARD.</h2>
+        <button class="btn" onclick="nextScreen(2)">PLEASE TAKE CONTROL</button>
+    </div>
+
+    <div id="dashboard">
+        <div class="panel" style="grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center;">
+            <span style="font-weight: bold;">MV MAYUKH | ECR DASHBOARD</span>
+            <span id="weather">HALDIA: 28°C | CLEAR</span>
+        </div>
+
+        <div class="panel">
+            <h3 style="color:var(--red); border-bottom: 1px solid #444;">HEART PARAMETERS</h3>
+            <span class="label">TELEGRAPH STATUS</span>
+            <div id="engine-status-tag">ENGINE STOPPED</div>
+            <span class="label">RPM (ENGINE SPEED)</span><span class="val" id="v-rpm">0</span>
+            <span class="label">KNOTS (VESSEL SPEED)</span><span class="val" id="v-knots">0.0</span>
+            <span class="label">SCAVENGE TEMP</span><span class="val" id="v-scav">32°C</span>
+            <span class="label">FUEL (LOVE) PRESSURE</span><span class="val" id="v-fuel">0 bar</span>
+        </div>
+
+        <div class="panel" style="justify-content: center; align-items: center;">
+            <svg viewBox="0 0 200 300" style="height: 250px;">
+                <rect x="60" y="20" width="80" height="220" fill="none" stroke="#444" stroke-width="2"/>
+                <rect id="piston" x="65" y="50" width="70" height="60" fill="#228b22" />
+                <line id="rod" x1="100" y1="80" x2="100" y2="200" stroke="#00ced1" stroke-width="8" />
+                <circle id="crank" cx="100" cy="200" r="12" fill="#ffff00" />
+            </svg>
+            <button id="ignite-btn" class="btn" style="width:100%; color:var(--red); border-color:var(--red);">PREPARE MAIN ENGINE</button>
+        </div>
+
+        <div class="panel">
+            <h3 style="color:var(--amber); border-bottom: 1px solid #444;">NAVIGATIONAL</h3>
+            <span class="label">SET DISTANCE TO HALDIA (nm)</span>
+            <input type="number" id="dist-input" value="2" step="0.1" style="background:#000; color:var(--green); border:1px solid var(--green); padding:5px;">
+            
+            <span class="label" style="margin-top:15px;">DISTANCE TO REACH</span>
+            <span class="val" id="v-dist" style="color:var(--red); font-size: 2.2rem;">2.0</span>
+            
+            <span class="label">DISTANCE DONE (TOTAL)</span>
+            <span class="val" id="v-done">0.0 nm</span>
+        </div>
+
+        <div class="panel" style="grid-column: 1 / -1; flex-direction: row; gap: 20px;">
+            <div style="flex:1">
+                <label class="label">LOVE (FUEL OIL)</label>
+                <input type="range" id="sl-f" value="0">
+            </div>
+            <div style="flex:1">
+                <label class="label">UNDERSTANDING (AIR SUPPLY)</label>
+                <input type="range" id="sl-a" value="0">
+            </div>
+            <div style="flex:1">
+                <label class="label">SUPPORT (LUBE OIL)</label>
+                <input type="range" id="sl-l" value="0">
+            </div>
+        </div>
+    </div>
+
+    <div id="arrival-popup">
+        <h1 style="color:var(--red); font-size: 3rem;">ANCHOR DROPPED!</h1>
+        <h2 id="wife-msg" style="color:white; margin: 20px;"></h2>
+        <h1 style="color:var(--amber);">HAPPY VALENTINE'S DAY! ❤️</h1>
+        <button class="btn" onclick="location.reload()">RE-BOARD</button>
+    </div>
+
+    <audio id="diesel-audio" loop src="http://googleusercontent.com/file_content/1"></audio>
+    <audio id="click-audio" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+
+    <script>
+        function forceAudioUnlock() {
+            const diesel = document.getElementById('diesel-audio');
+            diesel.muted = true;
+            diesel.play().then(() => {
+                console.log("Audio Unlocked");
+            });
+        }
+
+        function nextScreen(s) {
+            document.getElementById('click-audio').play();
+            if(s === 1) {
+                document.getElementById('scr-1').style.display = 'none';
+                document.getElementById('scr-2').style.display = 'flex';
+            } else {
+                document.getElementById('scr-2').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'grid';
+                window.dispatchEvent(new CustomEvent('ecrReady'));
+            }
+        }
+    </script>
+
+    <script type="py">
+        from pyscript import document, window
+        from pyodide.ffi import create_proxy
+        import math, random
+
+        state = {"f": 0, "a": 0, "l": 0, "on": False, "dist": 2.0, "done": 0.0, "arrived": False}
+        angle = 0
+        
+        def get_telegraph_status(rpm):
+            if not state["on"]: return "ENGINE STOPPED"
+            if rpm < 5: return "HEART ENGAGED AND RUNNING - NORMAL"
+            if rpm < 40: return "DEAD SLOW AHEAD"
+            if rpm < 80: return "SLOW AHEAD"
+            if rpm < 130: return "HALF AHEAD"
+            if rpm < 175: return "FULL AHEAD"
+            if rpm < 198: return "FULL AHEAD NAVIGATION / FULL AWAY"
+            return "EMERGENCY FULL AHEAD"
+
+        def engine_loop(t):
+            global angle
+            avg = (state['f'] + state['a'] + state['l']) / 3
+            rpm = avg * 2.0
+            audio = document.getElementById("diesel-audio")
+            
+            if state["on"]:
+                angle += (rpm / 60) * 12
+                rad = math.radians(angle)
+                py = 80 + math.cos(rad) * 40
+                cx = 100 + math.sin(rad) * 40
+                cy = 200 + math.cos(rad) * 40
+                
+                document.getElementById("piston").setAttribute("y", str(py))
+                document.getElementById("crank").setAttribute("cx", str(cx))
+                document.getElementById("crank").setAttribute("cy", str(cy))
+                document.getElementById("rod").setAttribute("y1", str(py+30))
+                document.getElementById("rod").setAttribute("x2", str(cx))
+                document.getElementById("rod").setAttribute("y2", str(cy))
+
+                if rpm > 0 and state["dist"] > 0:
+                    traveled = (rpm / 8000)
+                    state["dist"] -= traveled
+                    state["done"] += traveled
+                    document.getElementById("v-dist").innerHTML = str(round(max(0, state["dist"]), 1))
+                    document.getElementById("v-done").innerHTML = f"{round(state['done'], 2)} nm"
+                
+                if state["dist"] <= 0 and not state["arrived"]:
+                    state["arrived"] = True
+                    document.getElementById("arrival-popup").style.display = "flex"
+                    document.getElementById("wife-msg").innerHTML = "CHIEF, MY HEART ANCHORS WITH YOU."
+
+                document.getElementById("v-rpm").innerHTML = str(int(rpm))
+                document.getElementById("v-knots").innerHTML = str(round(rpm/12, 1))
+                document.getElementById("engine-status-tag").innerHTML = get_telegraph_status(rpm)
+                document.getElementById("v-scav").innerHTML = f"{int(30 + rpm/8)}°C"
+                document.getElementById("v-fuel").innerHTML = f"{round(state['f']*0.7, 1)} bar"
+                
+                if rpm > 0:
+                    audio.playbackRate = 0.8 + (rpm / 200)
+                    audio.volume = min(1.0, 0.4 + (rpm / 150))
+                else:
+                    audio.playbackRate = 0.7
+                    audio.volume = 0.3
+
+            window.requestAnimationFrame(create_proxy(engine_loop))
+
+        def start_engine(e):
+            if not state["on"]:
+                state["on"] = True
+                audio = document.getElementById("diesel-audio")
+                audio.muted = False
+                audio.play()
+                
+                btn = document.getElementById("ignite-btn")
+                btn.innerHTML = "MAYUKH'S HEART BEATING ❤️"
+                btn.style.background = "var(--red)"
+                btn.style.color = "white"
+                
+                window.requestAnimationFrame(create_proxy(engine_loop))
+
+        def update_val(e):
+            state[e.target.id.split('-')[1]] = int(e.target.value)
+
+        def set_dist(e):
+            try:
+                state["dist"] = float(e.target.value)
+                document.getElementById("v-dist").innerHTML = str(round(state["dist"], 1))
+            except: pass
+
+        async def init_ecr(e):
+            document.getElementById("ignite-btn").onclick = create_proxy(start_engine)
+            document.getElementById("sl-f").oninput = create_proxy(update_val)
+            document.getElementById("sl-a").oninput = create_proxy(update_val)
+            document.getElementById("sl-l").oninput = create_proxy(update_val)
+            document.getElementById("dist-input").onchange = create_proxy(set_dist)
+
+        window.addEventListener("ecrReady", create_proxy(init_ecr))
+    </script>
+</body>
+</html>
